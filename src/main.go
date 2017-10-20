@@ -13,15 +13,6 @@ func printUsage(programName string) {
 	os.Exit(1)
 }
 
-/**
- * Result from a query into the db storing language specific results.
- */
-type QueryResult struct {
-	ResultName     string
-	ResultType     string
-	ResultLanguage string
-}
-
 // process a specific query based on the
 func processCommand(query string, language string, queryType string) {
 
