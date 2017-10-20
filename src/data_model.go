@@ -10,8 +10,10 @@ import (
  * Result from a query into the db storing language specific results.
  */
 type QueryResult struct {
+	id             int
 	ResultName     string
 	ResultType     string
+	ResultPath     string
 	ResultLanguage string
 }
 
@@ -24,30 +26,87 @@ type Query struct {
 	Type        string
 }
 
-func getResults(q Query, database) QueryResult {
-
-}
-
-func insertElement(resultName string, resultType string, resultLanguage string) {
-	stmt, err := tx.Prepare("INSERT INTO TABLE values(?, ?)")
+/**
+ * Query the database for a specific result
+ */
+func getResults(q Query, db *sql.DB) []QueryResult {
+	rows, err := db.Query("SELECT * from searchIndex")
+	res := make([]QueryResult, 0)
 
 	if err != nil {
-		log.Fatal(err);
+		log.Fatal(err)
 	}
+
+	defer rows.Close()
+
+	// a result row
+	var (
+		id          int
+		name        string
+		elementType string
+		path        string
+		language    string
+	)
+
+	for rows.Next() {
+		err := rows.Scan(&id, &name, &language, &elementType)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Println(&id)
+
+		res = append(res, QueryResult{id, name, elementType, language, path})
+	}
+
+	return res
 }
 
-func createDatabase() {
-	stmt, err := tx.Prepare("CREATE TABLE searchIndex(id INTEGER PRIMARY KEY, name TEXT, type TEXT, path TEXT)");
+func insertElement(name string, elementType string, language string, path string, db *sql.DB) {
+
+	stmt, err := db.Prepare("INSERT INTO searchIndex values(?, ?, ?, ?)")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = stmt.Exec(name, elementType, path, language)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Inserted index successfully")
+}
+
+func createTable(db *sql.DB) {
+	stmt, err := db.Prepare("CREATE TABLE searchIndex(id INTEGER PRIMARY KEY AUTO_INCREMENT, name TEXT, type TEXT, path TEXT, language TEXT)")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = stmt.Exec()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Created table successfully")
 }
 
 /**
  * connect to an sql database
  */
-func connect() {
+func connect() *sql.DB {
 	db, err := sql.Open("sqlite3", "./database.db")
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	log.Println("Connected to database successfully")
+
+	return db
 }
