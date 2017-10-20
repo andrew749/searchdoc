@@ -20,7 +20,7 @@ func processCommand(query string, language string, queryType string) {
 
 func main() {
 
-	// get the arguments besdi
+	// get the arguments
 
 	if len(os.Args) < 2 {
 		// not enough arguments

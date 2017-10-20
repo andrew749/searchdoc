@@ -81,7 +81,7 @@ func insertElement(name string, elementType string, language string, path string
 }
 
 func createTable(language, db *sql.DB) {
-	stmt, err := db.Prepare("CREATE TABLE SearchIndex(id INTEGER PRIMARY KEY AUTO_INCREMENT, name TEXT, type TEXT, path TEXT, language TEXT)")
+	stmt, err := db.Prepare("CREATE TABLE IF NOT EXISTS SearchIndex(id INTEGER PRIMARY KEY AUTO_INCREMENT, name TEXT, type TEXT, path TEXT, language TEXT)")
 
 	if err != nil {
 		log.Fatal(err)
