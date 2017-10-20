@@ -65,7 +65,7 @@ func getResults(q Query, db *sql.DB) []QueryResult {
 
 func insertElement(name string, elementType string, language string, path string, db *sql.DB) {
 
-	stmt, err := db.Prepare("INSERT INTO searchIndex values(?, ?, ?, ?)")
+	stmt, err := db.Prepare("INSERT INTO SearchIndex values(?, ?, ?, ?)")
 
 	if err != nil {
 		log.Fatal(err)
@@ -80,8 +80,8 @@ func insertElement(name string, elementType string, language string, path string
 	log.Println("Inserted index successfully")
 }
 
-func createTable(db *sql.DB) {
-	stmt, err := db.Prepare("CREATE TABLE searchIndex(id INTEGER PRIMARY KEY AUTO_INCREMENT, name TEXT, type TEXT, path TEXT, language TEXT)")
+func createTable(language, db *sql.DB) {
+	stmt, err := db.Prepare("CREATE TABLE SearchIndex(id INTEGER PRIMARY KEY AUTO_INCREMENT, name TEXT, type TEXT, path TEXT, language TEXT)")
 
 	if err != nil {
 		log.Fatal(err)
