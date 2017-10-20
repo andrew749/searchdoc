@@ -2,7 +2,7 @@
 
 Search documentation for a specific langauge.
 
-Supports the same documentation formats that [Dash](http://kapeli.com/dash) and [Zeal](http://zealdoc.org) do.
+Supports the same documentation formats that [Dash](http://kapeli.com/dash) and [Zeal](http://zealdocs.org) do.
 
 
 ## Usage
