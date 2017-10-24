@@ -2,8 +2,10 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
+	"reflect"
 )
 
 /**
@@ -27,11 +29,15 @@ type Query struct {
 }
 
 /**
- * Query the database for a specific result
+ * Query the database for a specific result, will automatically fill type
  */
-func getAllResults(db *sql.DB) []QueryResult {
-	rows, err := db.Query("SELECT * from searchIndex")
-	res := make([]QueryResult, 0)
+func getAllResults(t reflect.Type, databaseName string, db *sql.DB) []interface{} {
+
+	res := reflect.MakeSlice(reflect.SliceOf(t), 0, 10)
+
+	query := fmt.Sprint("SELECT * from %s", databaseName)
+
+	rows, err := db.Query(query)
 
 	if err != nil {
 		log.Fatal(err)
@@ -39,26 +45,29 @@ func getAllResults(db *sql.DB) []QueryResult {
 
 	defer rows.Close()
 
-	// a result row
-	var (
-		id          int
-		name        string
-		elementType string
-		path        string
-		language    string
-	)
+	// get the columns of the results
+	columns, _ := rows.Columns()
+	count := len(columns)
+	values := make([]interface{}, count)
+	valuePtrs := make([]interface{}, count)
 
 	for rows.Next() {
-		err := rows.Scan(&id, &name, &language, &elementType)
+
+		for i, _ := range columns {
+			valuePtrs[i] = &values[i]
+		}
+
+		err := rows.Scan(valuePtrs...)
 
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		res = append(res, QueryResult{id, name, elementType, language, path})
-	}
+		element := reflect.New(t)
 
-	return res
+		res = reflect.Append(res, element)
+	}
+	return res.Interface().([]*t)
 }
 
 func insertSearchIndexElement(name string, elementType string, language string, path string, db *sql.DB) {

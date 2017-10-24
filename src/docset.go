@@ -5,6 +5,7 @@ import (
 	plist "howett.net/plist"
 	"log"
 	"net/http"
+	"reflect"
 )
 
 /**
@@ -75,7 +76,7 @@ func loadSQLiteIndex(languageName string, docsetPath string) []DocsetData {
 
 	defer database.Close()
 
-	for _, result := range getAllResults(database) {
+	for _, result := range getAllResults(reflect.TypeOf(DocsetElement).Elem(), "selectIndex", database) {
 		insertSearchIndexElement(result.ResultName, result.ResultType, languageName, result.ResultPath, database)
 	}
 
