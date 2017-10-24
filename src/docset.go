@@ -5,7 +5,6 @@ import (
 	plist "howett.net/plist"
 	"log"
 	"net/http"
-	"reflect"
 )
 
 /**
@@ -14,7 +13,7 @@ import (
 var Docsets = [...]string{"Pandoc"}
 
 /**
-* Each row of a docset index
+* Each row of a docset index from the sqlite file.
  */
 type DocsetElement struct {
 	Id   int
@@ -23,29 +22,30 @@ type DocsetElement struct {
 	Path string
 }
 
-type DocsetData struct {
-	Elements []DocsetElement
-}
-
 type Docset struct {
-	Name string
-	Path string
-	Data DocsetData
+	Name        string
+	Path        string
+	DocsetPlist DocsetPlist
+	Data        []DocsetElement
 }
 
 /**
-* Hold info.plist information from the docset
+* Hold info.plist information from the docset.
  */
-type DashPlist struct {
+type DocsetPlist struct {
 	Identifier           string `plist:"CFBundleIdentifier"`
 	Name                 string `plist:"CFBundleName"`
 	DocsetPlatformFamily string `plist:"DocSetPlatformFamily"`
 	isDashDocset         bool   `plist:"isDashDocset"`
 }
 
-func getDocsetPList(fileData []byte) DashPlist {
-	var data DashPlist
+/**
+* Convert a file corresponding to a plist to the appropriate datatype
+ */
+func getDocsetPList(fileData []byte) DocsetPlist {
+	var data DocsetPlist
 	_, err := plist.Unmarshal(fileData, data)
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -56,7 +56,7 @@ func getDocsetPList(fileData []byte) DashPlist {
 /**
 * Downloads a docset and places it into a specific directory as a tar.gz file
  */
-func downloadDocset(docsetName string, saveDirectory string) {
+func DownloadDocset(docsetName string, saveDirectory string) {
 	baseString := "https://github.com/Kapeli/Dash-User-Contributions/tree/master/docsets/%s.tar.gz"
 	docsetString := fmt.Sprint(baseString, docsetName)
 	_, err := http.Get(docsetString)
@@ -64,21 +64,47 @@ func downloadDocset(docsetName string, saveDirectory string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 }
 
 /**
-* Provided with a docset name read the sqlite index and populate the local db.
+* Provided with a docset name, read the sqlite index and populate the local db.
  */
-func loadSQLiteIndex(languageName string, docsetPath string) []DocsetData {
+func LoadSQLiteIndex(languageName string, docsetPath string) Docset {
 	docsetIndexPath := "%s/Contents/Resources/docSet.dsidx"
 	database := OpenDatabaseFile(docsetIndexPath)
 
 	defer database.Close()
 
-	for _, result := range getAllResults(reflect.TypeOf(DocsetElement).Elem(), "selectIndex", database) {
-		insertSearchIndexElement(result.ResultName, result.ResultType, languageName, result.ResultPath, database)
+	query := DocsetQuery{languageName}
+
+	languageResults := GetAllIndexResultsForLanguage(query)
+
+	var docset Docset
+	docset.Data = make([]DocsetElement, 0, 0)
+
+	for _, element := range languageResults {
+		var tempElement DocsetElement = DocsetElement{
+			element.Id,
+			element.QueryResultName,
+			element.QueryResultType,
+			element.QueryResultPath}
+		docset.Data = append(docset.Data, tempElement)
 	}
 
-	return nil
+	return docset
+}
+
+type DocsetQueryEngine interface {
+	GetIndicesForLanguage(language string) Docset
+}
+
+/**
+* Concrete implementation of Query engine
+ */
+type DocsetQueryEngineImpl struct {
+}
+
+func (engine *DocsetQueryEngineImpl) GetIndicesForLanguage(language string) Docset {
+	databasePath := ""
+	return LoadSQLiteIndex(language, databasePath)
 }
