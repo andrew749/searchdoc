@@ -11,3 +11,8 @@ func TestSetGetQuery(t *testing.T) {
     controller.setQuery(query)
     assert.Equal(t, query, controller.getQuery())
 }
+
+func TestTermboxView(t *testing.T) {
+    view := TermboxView{}
+    v.render(GraphicsContext{})
+}

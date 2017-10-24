@@ -1,8 +1,8 @@
 package ui
 
 /**
-* This package should contain the ui printer that interfaces with the command line
-* The goal is to accept input from the user and make a query to the core layer.
+* This package contains the ui printer that interfaces with the command line.
+* It accepts a query from user input and uses it to update the core service.
  */
 
 type UIController interface {
@@ -21,3 +21,4 @@ func (c *UIControllerImpl) setQuery(q string) {
 func (c *UIControllerImpl) getQuery() string {
     return c.query
 }
+
