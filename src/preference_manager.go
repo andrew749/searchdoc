@@ -2,10 +2,16 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+)
+
+const (
+	PreferencesFile = "preferences.json"
+	DocsetDir       = "docsets"
 )
 
 func PreferencesDirectory() string {
@@ -13,8 +19,6 @@ func PreferencesDirectory() string {
 
 	return path
 }
-
-const PreferencesFile = "preferences.json"
 
 func PreferencesPath() string {
 	path := filepath.Join(PreferencesDirectory(), PreferencesFile)
@@ -51,12 +55,13 @@ func loadPreferences() Preferences {
 			log.Fatal(err2)
 		}
 
-		file.WriteString("{}")
+		docsetPath := filepath.Join(os.Getenv("HOME"), DocsetDir)
+		defaultSettings := fmt.Sprintf("{\"docset_path\": \"%s\"}", docsetPath)
+
+		file.WriteString(defaultSettings)
 
 		log.Println("Created file")
 	}
-
-	log.Println("DONE")
 
 	file, err := os.Open(PreferencesPath())
 
