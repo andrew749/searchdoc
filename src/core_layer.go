@@ -7,6 +7,10 @@ package main
 * Results should be returned as if a fuzzy search is performed.
  */
 
+type SearchQuery struct {
+	QueryString string
+}
+
 type CoreLayer interface {
-	query(q string)
+	Query(string, chan SearchQuery)
 }
