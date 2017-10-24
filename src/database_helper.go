@@ -2,109 +2,71 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
-	"reflect"
 )
 
 /**
- * Result from a query into the db storing language specific results.
+ * Result from a query.
+ *
+ * OUTPUT
  */
-type QueryResult struct {
-	id             int
-	ResultName     string
-	ResultType     string
-	ResultPath     string
-	ResultLanguage string
+type DocsetQueryResult struct {
+	Id              int
+	QueryResultName string
+	QueryResultType string
+	QueryResultPath string
 }
 
 /**
- * Encapsulate a user query
+ * Encapsulate a user query into the database.
+ *
+ * INPUT
  */
-type Query struct {
-	QueryString string
-	Language    string
-	Type        string
+type DocsetQuery struct {
+	// provide the database path
+	Path string
 }
 
-/**
- * Query the database for a specific result, will automatically fill type
- */
-func getAllResults(t reflect.Type, databaseName string, db *sql.DB) []interface{} {
+func GetAllIndexResultsForLanguage(query DocsetQuery) []DocsetQueryResult {
+	databaseLocation := GetSQLiteLocation(query.Path)
 
-	res := reflect.MakeSlice(reflect.SliceOf(t), 0, 10)
+	db := OpenDatabaseFile(databaseLocation)
+	defer db.Close()
 
-	query := fmt.Sprint("SELECT * from %s", databaseName)
-
-	rows, err := db.Query(query)
+	queryResults, err := db.Query("SELECT * FROM searchIndex")
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	defer rows.Close()
+	defer queryResults.Close()
 
-	// get the columns of the results
-	columns, _ := rows.Columns()
-	count := len(columns)
-	values := make([]interface{}, count)
-	valuePtrs := make([]interface{}, count)
+	// hold results from query
+	res := make([]DocsetQueryResult, 0, 1)
 
-	for rows.Next() {
+	for queryResults.Next() {
+		var queryResult DocsetQueryResult
 
-		for i, _ := range columns {
-			valuePtrs[i] = &values[i]
-		}
-
-		err := rows.Scan(valuePtrs...)
-
+		err := queryResults.Scan(
+			&queryResult.Id,
+			&queryResult.QueryResultName,
+			&queryResult.QueryResultType,
+			&queryResult.QueryResultPath)
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		element := reflect.New(t)
-
-		res = reflect.Append(res, element)
+		res = append(res, queryResult)
 	}
-	return res.Interface().([]*t)
+
+	return res
 }
 
-func insertSearchIndexElement(name string, elementType string, language string, path string, db *sql.DB) {
-
-	stmt, err := db.Prepare("INSERT INTO SearchIndex values(?, ?, ?, ?)")
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	_, err = stmt.Exec(name, elementType, path, language)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println("Inserted index successfully")
-}
-
-func createSearchIndexTable(language, db *sql.DB) {
-	stmt, err := db.Prepare("CREATE TABLE IF NOT EXISTS SearchIndex(id INTEGER PRIMARY KEY AUTO_INCREMENT, name TEXT, type TEXT, path TEXT, language TEXT)")
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	_, err = stmt.Exec()
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println("Created table successfully")
-}
-
-func OpenApplicationDatabase() *sql.DB {
-	return OpenDatabaseFile(getPreferences().DatabasePath)
+/**
+* Get the location of an sqlite file.
+ */
+func GetSQLiteLocation(language string) string {
+	return "ERROR NOT IMPLEMENTED"
 }
 
 /**
