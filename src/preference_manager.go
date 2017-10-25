@@ -11,52 +11,58 @@ import (
 
 const (
 	PreferencesFile = "preferences.json"
+	PreferencesDir  = ".searchdoc"
 	DocsetDir       = "docsets"
 )
 
 func PreferencesDirectory() string {
-	path := filepath.Join(os.Getenv("HOME"), ".searchdoc")
-
-	return path
+	return filepath.Join(os.Getenv("HOME"), PreferencesDir)
 }
 
 func PreferencesPath() string {
-	path := filepath.Join(PreferencesDirectory(), PreferencesFile)
+	return filepath.Join(PreferencesDirectory(), PreferencesFile)
+}
 
-	return path
+func DocsetPath() string {
+	return filepath.Join(PreferencesDirectory(), DocsetDir)
 }
 
 type Preferences struct {
-	DocsetPath string `json:"docset_path"`
+	DocsetPath    string `json:"docset_path"`
+	SearchDocPath string `json:"search_doc_path"`
 }
 
 func loadPreferences() Preferences {
-	var data Preferences
+	var (
+		data Preferences
+		file *os.File
+	)
 
-	var file *os.File
 	if _, err := os.Stat(PreferencesPath()); os.IsNotExist(err) {
 
 		if _, err = os.Stat(PreferencesDirectory()); os.IsNotExist(err) {
+
 			log.Println("Trying to create directory")
+			err = os.Mkdir(PreferencesDirectory(), 0777)
 
-			err2 := os.Mkdir(PreferencesDirectory(), 0777)
-
-			if err2 != nil {
-				log.Fatal(err2)
+			if err != nil {
+				log.Fatal(err)
 			}
 
 		}
 
 		log.Println("Trying to create file")
-		file, err2 := os.Create(PreferencesPath())
+		file, err := os.Create(PreferencesPath())
 
-		if err2 != nil {
+		if err != nil {
 			log.Println("Cant create")
-			log.Fatal(err2)
+			log.Fatal(err)
 		}
 
-		docsetPath := filepath.Join(os.Getenv("HOME"), DocsetDir)
-		defaultSettings := fmt.Sprintf("{\"docset_path\": \"%s\"}", docsetPath)
+		defaultSettings := fmt.Sprintf(`{
+			"docset_path": "%s",
+			"search_doc_path":"%s"
+		}`, DocsetPath(), PreferencesDirectory())
 
 		file.WriteString(defaultSettings)
 
