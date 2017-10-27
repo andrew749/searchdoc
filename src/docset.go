@@ -118,6 +118,22 @@ func DownloadDocset(language string, url string) error {
 	return nil
 }
 
+func GetAvailableDocsets() []string {
+	docsetNames := make([]string, 0)
+
+	docsetDirectories, err := ioutil.ReadDir(DocsetPath())
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, directory := range docsetDirectories {
+		docsetNames = append(docsetNames, directory.Name())
+	}
+
+	return docsetNames
+}
+
 /**
 * Provided with a docset name, read the sqlite index and populate a docset object.
  */
