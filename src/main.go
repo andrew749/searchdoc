@@ -23,10 +23,11 @@ func processCommand(query string, language string, queryType string) {
 	//GetDocsetPList("Go")
 
 	// get the feed data
-	feeds := GetDocsetFeeds()
+	//feeds := GetDocsetFeeds()
 
 	// downloads work
-	DownloadDocset(feeds[0].Name, feeds[0].Urls[0])
+	//DownloadDocset(feeds[0].Name, feeds[0].Urls[0])
+	fmt.Println(GetAvailableDocsets())
 }
 
 func main() {

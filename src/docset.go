@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 )
 
@@ -119,6 +120,7 @@ func DownloadDocset(language string, url string) error {
 }
 
 func GetAvailableDocsets() []string {
+
 	docsetNames := make([]string, 0)
 
 	docsetDirectories, err := ioutil.ReadDir(DocsetPath())
@@ -128,7 +130,24 @@ func GetAvailableDocsets() []string {
 	}
 
 	for _, directory := range docsetDirectories {
-		docsetNames = append(docsetNames, directory.Name())
+
+		docsetPath := filepath.Join(DocsetPath(), directory.Name())
+
+		dashDir := false
+		// if the check the docsetpath
+		err = filepath.Walk(docsetPath, func(path string, info os.FileInfo, err error) error {
+			// check that a plist exists
+			if info.Name() == "docSet.dsidx" {
+				// found a dash docset
+				dashDir = true
+			}
+
+			return nil
+		})
+
+		if dashDir {
+			docsetNames = append(docsetNames, directory.Name())
+		}
 	}
 
 	return docsetNames
