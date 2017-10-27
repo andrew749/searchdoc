@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 )
 
@@ -20,10 +21,13 @@ func processCommand(query string, language string, queryType string) {
 	queryEngine.GetIndicesForLanguage(language)
 
 	// get the plist data
-	GetDocsetPList("Go")
+	//GetDocsetPList("Go")
 
 	// get the feed data
-	GetDocsetFeeds()
+	feeds := GetDocsetFeeds()
+
+	// downloads work
+	DownloadDocset(feeds[0].Name, feeds[0].Urls[0])
 }
 
 func main() {

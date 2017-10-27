@@ -79,6 +79,10 @@ func GetDocsetFeeds() []FeedData {
 			log.Fatal(err)
 		} // if
 
+		if filepath.Ext(header.FileInfo().Name()) != ".xml" {
+			continue
+		}
+
 		switch header.Typeflag {
 		// process files
 		case tar.TypeReg:
@@ -90,7 +94,6 @@ func GetDocsetFeeds() []FeedData {
 				data.Name = header.FileInfo().Name()
 
 				res = append(res, data)
-				data.Print()
 			}
 		} // switch
 	} // for processing file entries
@@ -99,15 +102,20 @@ func GetDocsetFeeds() []FeedData {
 /**
 * Downloads a docset and places it into a specific directory as a tar.gz file
  */
-func DownloadDocset(docsetName string, saveDirectory string) {
-	baseString := "https://github.com/Kapeli/feeds/%s.tar.gz"
-	docsetString := fmt.Sprint(baseString, docsetName)
-	_, err := http.Get(docsetString)
+func DownloadDocset(language string, url string) error {
+	log.Printf("Downloading  %s", language)
+	resp, err := http.Get(url)
 
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
+	// add the newly downloaded docset to the appropriate directory
+	pathToUnzip := DocsetPath()
+	log.Printf("Saving to  %s", pathToUnzip)
+	Untar(pathToUnzip, resp.Body)
+
+	return nil
 }
 
 /**
