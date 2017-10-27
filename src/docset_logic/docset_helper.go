@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/xml"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -13,37 +12,6 @@ import (
 	"os"
 	"path/filepath"
 )
-
-/**
-* Each row of a docset index from the sqlite file.
- */
-type DocsetElement struct {
-	Id   int
-	Name string
-	Type string
-	Path string
-}
-
-type Docset struct {
-	Name        string
-	Path        string
-	DocsetPlist DocsetPlist
-	Data        []DocsetElement
-}
-
-type FeedData struct {
-	Name     string
-	Version  string   `xml:"version"`
-	Urls     []string `xml:"url"`
-	Versions []string `xml:"other-versions>version>name"`
-}
-
-func (data *FeedData) Print() {
-	fmt.Println(data.Name)
-	fmt.Println(data.Version)
-	fmt.Println(data.Urls)
-	fmt.Print("\n\n")
-}
 
 /**
 * Connect to github and get the latest feeds from kapeli's repo.
@@ -102,9 +70,9 @@ func GetDocsetFeeds() []FeedData {
 
 /**
 * Downloads a docset and places it into a specific directory as a tar.gz file
+* specify the language name and the url to query from
  */
-func DownloadDocset(language string, url string) error {
-	log.Printf("Downloading  %s", language)
+func DownloadDocset(url string) error {
 	resp, err := http.Get(url)
 
 	if err != nil {
@@ -119,6 +87,10 @@ func DownloadDocset(language string, url string) error {
 	return nil
 }
 
+/**
+* Get the available docsets which are stored locally in the
+* directory specified in preferences.
+ */
 func GetAvailableDocsets() []string {
 
 	docsetNames := make([]string, 0)
@@ -156,9 +128,9 @@ func GetAvailableDocsets() []string {
 /**
 * Provided with a docset name, read the sqlite index and populate a docset object.
  */
-func LoadSQLiteIndex(languageName string) Docset {
+func DocsetForLanguage(language string) Docset {
 	databasePath := filepath.Join(
-		GetDocsetPath(languageName),
+		GetDocsetPath(language),
 		"Contents",
 		"Resources",
 		"docSet.dsidx")

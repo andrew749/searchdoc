@@ -14,5 +14,5 @@ type DocsetQueryEngineImpl struct {
 }
 
 func (engine *DocsetQueryEngineImpl) GetIndicesForLanguage(language string) Docset {
-	return LoadSQLiteIndex(language)
+	return DocsetForLanguage(language)
 }

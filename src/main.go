@@ -8,12 +8,14 @@ import (
 var language string
 var queryType string
 
+/**
+* Print a usage message.
+ */
 func printUsage(programName string) {
 	fmt.Printf("./%s [--query QUERY] [--language] [--type]* \n", programName)
 	os.Exit(1)
 }
 
-// process a specific query based on the
 func processCommand(query string, language string, queryType string) {
 	queryEngine := DocsetQueryEngineImpl{}
 
@@ -26,7 +28,7 @@ func processCommand(query string, language string, queryType string) {
 	//feeds := GetDocsetFeeds()
 
 	// downloads work
-	//DownloadDocset(feeds[0].Name, feeds[0].Urls[0])
+	//DownloadDocset(feeds[0].Urls[0])
 	fmt.Println(GetAvailableDocsets())
 }
 
@@ -54,6 +56,7 @@ func main() {
 	}
 
 	// process the command
+	// TODO: replace with connection to ui
 	processCommand(query, language, queryType)
 
 }
