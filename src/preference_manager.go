@@ -42,8 +42,11 @@ func loadPreferences() Preferences {
 		file *os.File
 	)
 
+	// check if the preferences exist, create if they don't
 	if _, err := os.Stat(PreferencesPath()); os.IsNotExist(err) {
+		// the preferences dont exist
 
+		// check if the preferences directory exists, create if it doesn't
 		if _, err = os.Stat(PreferencesDirectory()); os.IsNotExist(err) {
 
 			log.Println("Trying to create directory")
@@ -63,6 +66,7 @@ func loadPreferences() Preferences {
 			log.Fatal(err)
 		}
 
+		// format the default file
 		defaultSettings := fmt.Sprintf(`{
 			"docset_path": "%s",
 			"search_doc_path":"%s"

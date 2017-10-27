@@ -3,7 +3,6 @@ package main
 import (
 	plist "howett.net/plist"
 	"io/ioutil"
-	"log"
 	"path/filepath"
 )
 
@@ -37,8 +36,6 @@ func GetDocsetPList(docset string) (DocsetPlist, error) {
 	if err != nil {
 		return data, err
 	}
-
-	log.Println(data.Name)
 
 	return data, nil
 }
