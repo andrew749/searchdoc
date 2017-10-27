@@ -116,7 +116,9 @@ func DownloadDocset(docsetName string, saveDirectory string) {
 func LoadSQLiteIndex(languageName string) Docset {
 	databasePath := filepath.Join(
 		GetDocsetPath(languageName),
-		"/Contents/Resources/docSet.dsidx")
+		"Contents",
+		"Resources",
+		"docSet.dsidx")
 
 	query := DocsetQuery{databasePath}
 
