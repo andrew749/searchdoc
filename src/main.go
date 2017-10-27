@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 )
 
@@ -19,6 +18,12 @@ func processCommand(query string, language string, queryType string) {
 	queryEngine := DocsetQueryEngineImpl{}
 
 	queryEngine.GetIndicesForLanguage(language)
+
+	// get the plist data
+	GetDocsetPList("Go")
+
+	// get the feed data
+	GetDocsetFeeds()
 }
 
 func main() {
@@ -44,7 +49,6 @@ func main() {
 		queryType = os.Args[3]
 	}
 
-	log.Println("Processing path")
 	// process the command
 	processCommand(query, language, queryType)
 

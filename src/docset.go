@@ -1,10 +1,12 @@
 package main
 
 import (
+	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"encoding/xml"
 	"fmt"
-	plist "howett.net/plist"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -28,33 +30,25 @@ type Docset struct {
 	Data        []DocsetElement
 }
 
-/**
-* Hold info.plist information from the docset.
- */
-type DocsetPlist struct {
-	Identifier           string `plist:"CFBundleIdentifier"`
-	Name                 string `plist:"CFBundleName"`
-	DocsetPlatformFamily string `plist:"DocSetPlatformFamily"`
-	isDashDocset         bool   `plist:"isDashDocset"`
+type FeedData struct {
+	Name     string
+	Version  string   `xml:"version"`
+	Urls     []string `xml:"url"`
+	Versions []string `xml:"other-versions>version>name"`
+}
+
+func (data *FeedData) Print() {
+	fmt.Println(data.Name)
+	fmt.Println(data.Version)
+	fmt.Println(data.Urls)
+	fmt.Print("\n\n")
 }
 
 /**
-* Convert a file corresponding to a plist to the appropriate datatype
+* Connect to github and get the latest feeds from kapeli's repo.
  */
-func GetDocsetPList(fileData []byte) DocsetPlist {
-	var data DocsetPlist
-
-	_, err := plist.Unmarshal(fileData, data)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return data
-}
-
-func GetDocsetFeeds() []string {
-	repoUrl := `https://github.com/Kapeli/feeds/tar/master.tar.gz`
+func GetDocsetFeeds() []FeedData {
+	repoUrl := `https://github.com/Kapeli/feeds/archive/master.tar.gz`
 	resp, err := http.Get(repoUrl)
 
 	if err != nil {
@@ -62,15 +56,44 @@ func GetDocsetFeeds() []string {
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
-	reader := bytes.NewReader(body)
-	//TODO: finish getting docset feeds
-	_, err = gzip.NewReader(reader)
+	byteReader := bytes.NewReader(body)
+
+	gzipReader, err := gzip.NewReader(byteReader)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	return []string{"TODO REMOVE"}
+	res := make([]FeedData, 0)
+
+	reader := tar.NewReader(gzipReader)
+
+	for {
+
+		header, err := reader.Next()
+
+		// check if the error is expected
+		if err == io.EOF {
+			return res
+		} else if err != nil {
+			log.Fatal(err)
+		} // if
+
+		switch header.Typeflag {
+		// process files
+		case tar.TypeReg:
+			{
+				var data FeedData
+				buf := new(bytes.Buffer)
+				buf.ReadFrom(reader)
+				xml.Unmarshal(buf.Bytes(), &data)
+				data.Name = header.FileInfo().Name()
+
+				res = append(res, data)
+				data.Print()
+			}
+		} // switch
+	} // for processing file entries
 }
 
 /**
@@ -92,8 +115,8 @@ func DownloadDocset(docsetName string, saveDirectory string) {
  */
 func LoadSQLiteIndex(languageName string) Docset {
 	databasePath := filepath.Join(
-		GetPreferences().DocsetPath,
-		fmt.Sprintf("%s.docset/Contents/Resources/docSet.dsidx", languageName))
+		GetDocsetPath(languageName),
+		"/Contents/Resources/docSet.dsidx")
 
 	query := DocsetQuery{databasePath}
 

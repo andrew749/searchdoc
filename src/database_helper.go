@@ -2,9 +2,9 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
+	"path/filepath"
 )
 
 /**
@@ -69,10 +69,9 @@ func GetAllIndexResultsForLanguage(query DocsetQuery) []DocsetQueryResult {
 * Get the location of an sqlite file.
  */
 func GetSQLiteLocation(language string) string {
-	sqLitePath := fmt.Sprintf(
-		"%s/%s.docset/Contents/Resources/docSet.dsidx",
-		GetPreferences().DocsetPath,
-		language)
+	sqLitePath := filepath.Join(
+		GetDocsetPath(language),
+		"/Contents/Resources/docSet.dsidx")
 	return sqLitePath
 }
 

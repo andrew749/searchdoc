@@ -27,6 +27,10 @@ func DocsetPath() string {
 	return filepath.Join(PreferencesDirectory(), DocsetDir)
 }
 
+func GetDocsetPath(docset string) string {
+	return filepath.Join(DocsetPath(), fmt.Sprintf("%s.docset", docset))
+}
+
 type Preferences struct {
 	DocsetPath    string `json:"docset_path"`
 	SearchDocPath string `json:"search_doc_path"`
