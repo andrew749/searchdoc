@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"searchdoc/src/docset_logic"
 )
 
 var language string
@@ -17,19 +18,19 @@ func printUsage(programName string) {
 }
 
 func processCommand(query string, language string, queryType string) {
-	queryEngine := DocsetQueryEngineImpl{}
+	queryEngine := docset_logic.DocsetQueryEngineImpl{}
 
 	queryEngine.GetIndicesForLanguage(language)
 
 	// get the plist data
-	//GetDocsetPList("Go")
+	//utils.GetDocsetPList("Go")
 
 	// get the feed data
 	//feeds := GetDocsetFeeds()
 
 	// downloads work
 	//DownloadDocset(feeds[0].Urls[0])
-	fmt.Println(GetAvailableDocsets())
+	//fmt.Println(GetAvailableDocsets())
 }
 
 func main() {

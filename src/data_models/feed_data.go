@@ -1,4 +1,4 @@
-package main
+package data_models
 
 /**
 * A data class to hold data returned from the language feed from

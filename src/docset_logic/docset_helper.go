@@ -1,4 +1,4 @@
-package main
+package docset_logic
 
 import (
 	"archive/tar"
@@ -11,12 +11,15 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	data_models "searchdoc/src/data_models"
+	database "searchdoc/src/database"
+	utils "searchdoc/src/utils"
 )
 
 /**
 * Connect to github and get the latest feeds from kapeli's repo.
  */
-func GetDocsetFeeds() []FeedData {
+func GetDocsetFeeds() []data_models.FeedData {
 	repoUrl := `https://github.com/Kapeli/feeds/archive/master.tar.gz`
 	resp, err := http.Get(repoUrl)
 
@@ -33,7 +36,7 @@ func GetDocsetFeeds() []FeedData {
 		log.Fatal(err)
 	}
 
-	res := make([]FeedData, 0)
+	res := make([]data_models.FeedData, 0)
 
 	reader := tar.NewReader(gzipReader)
 
@@ -56,7 +59,7 @@ func GetDocsetFeeds() []FeedData {
 		// process files
 		case tar.TypeReg:
 			{
-				var data FeedData
+				var data data_models.FeedData
 				buf := new(bytes.Buffer)
 				buf.ReadFrom(reader)
 				xml.Unmarshal(buf.Bytes(), &data)
@@ -80,9 +83,9 @@ func DownloadDocset(url string) error {
 	}
 
 	// add the newly downloaded docset to the appropriate directory
-	pathToUnzip := DocsetPath()
+	pathToUnzip := utils.DocsetPath()
 	log.Printf("Saving to  %s", pathToUnzip)
-	Untar(pathToUnzip, resp.Body)
+	utils.Untar(pathToUnzip, resp.Body)
 
 	return nil
 }
@@ -95,7 +98,7 @@ func GetAvailableDocsets() []string {
 
 	docsetNames := make([]string, 0)
 
-	docsetDirectories, err := ioutil.ReadDir(DocsetPath())
+	docsetDirectories, err := ioutil.ReadDir(utils.DocsetPath())
 
 	if err != nil {
 		log.Fatal(err)
@@ -103,7 +106,7 @@ func GetAvailableDocsets() []string {
 
 	for _, directory := range docsetDirectories {
 
-		docsetPath := filepath.Join(DocsetPath(), directory.Name())
+		docsetPath := filepath.Join(utils.DocsetPath(), directory.Name())
 
 		dashDir := false
 		// if the check the docsetpath
@@ -128,23 +131,23 @@ func GetAvailableDocsets() []string {
 /**
 * Provided with a docset name, read the sqlite index and populate a docset object.
  */
-func DocsetForLanguage(language string) Docset {
+func DocsetForLanguage(language string) data_models.Docset {
 	databasePath := filepath.Join(
-		GetDocsetPath(language),
+		utils.GetDocsetPath(language),
 		"Contents",
 		"Resources",
 		"docSet.dsidx")
 
-	query := DocsetQuery{databasePath}
+	query := database.DocsetQuery{databasePath}
 
-	languageResults := GetAllIndexResultsForLanguage(query)
+	languageResults := database.GetAllIndexResultsForLanguage(query)
 
-	var docset Docset
-	docset.Data = make([]DocsetElement, 0, 0)
+	var docset data_models.Docset
+	docset.Data = make([]data_models.DocsetElement, 0, 0)
 
 	// iterate over the results for a specific language
 	for _, element := range languageResults {
-		var tempElement DocsetElement = DocsetElement{
+		var tempElement data_models.DocsetElement = data_models.DocsetElement{
 			element.Id,
 			element.QueryResultName,
 			element.QueryResultType,
