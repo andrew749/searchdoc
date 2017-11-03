@@ -1,29 +1,19 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"os"
 	"searchdoc/src/docset_logic"
 )
 
 var language string
 var queryType string
 
-/**
-* Print a usage message.
- */
-func printUsage(programName string) {
-	fmt.Printf("./%s [--query QUERY] [--language] [--type]* \n", programName)
-	os.Exit(1)
-}
-
-func processCommand(query string, language string, queryType string) {
+func processCommand(query string, language string) {
 	queryEngine := docset_logic.DocsetQueryEngineImpl{}
 
-	queryEngine.GetIndicesForLanguage(language)
-
-	// get the plist data
-	//utils.GetDocsetPList("Go")
+	docset := queryEngine.GetIndicesForLanguage(language)
+	fmt.Printf(docset.Name)
 
 	// get the feed data
 	//feeds := GetDocsetFeeds()
@@ -36,28 +26,19 @@ func processCommand(query string, language string, queryType string) {
 func main() {
 
 	// get the arguments
+	var (
+		query    string
+		language string
+	)
 
-	if len(os.Args) < 2 {
-		// not enough arguments
-		printUsage(os.Args[0])
-	}
+	flag.StringVar(&query, "query", "", "The query to search")
+	flag.StringVar(&language, "language", "", "The query to search")
+	flag.Parse()
 
-	query := os.Args[1]
-
-	var language string
-
-	if len(os.Args) >= 3 {
-		language = os.Args[2]
-	}
-
-	var queryType string
-
-	if len(os.Args) >= 4 {
-		queryType = os.Args[3]
-	}
+	fmt.Printf("language: %s\nquery: %s\n", language, query)
 
 	// process the command
 	// TODO: replace with connection to ui
-	processCommand(query, language, queryType)
+	processCommand(query, language)
 
 }

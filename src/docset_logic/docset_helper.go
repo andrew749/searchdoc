@@ -129,7 +129,7 @@ func GetAvailableDocsets() []string {
 }
 
 /**
-* Provided with a docset name, read the sqlite index and populate a docset object.
+* Provided with a docset name, read the sqlite index and populate a Docset object.
  */
 func DocsetForLanguage(language string) data_models.Docset {
 	databasePath := filepath.Join(
@@ -143,6 +143,13 @@ func DocsetForLanguage(language string) data_models.Docset {
 	languageResults := database.GetAllIndexResultsForLanguage(query)
 
 	var docset data_models.Docset
+	plist, err := utils.GetDocsetPList(language)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	docset.DocsetPlist = plist
 	docset.Data = make([]data_models.DocsetElement, 0, 0)
 
 	// iterate over the results for a specific language

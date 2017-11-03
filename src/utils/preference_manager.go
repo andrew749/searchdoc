@@ -37,6 +37,7 @@ type Preferences struct {
 }
 
 func loadPreferences() Preferences {
+
 	var (
 		data Preferences
 		file *os.File
@@ -100,6 +101,7 @@ func loadPreferences() Preferences {
 	return data
 }
 
+// get the preferences for this instance of the application
 var _Preferences = loadPreferences()
 
 func GetPreferences() Preferences {
