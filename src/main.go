@@ -14,8 +14,12 @@ func processCommand(query string, language string) {
 
 	docset := queryEngine.GetIndicesForLanguage(language)
 	fmt.Printf(docset.Name)
+	for _, x := range docset.Data {
+		x.PrintElement()
+	}
 
 	// get the feed data
+	// To be used for determining what to download
 	//feeds := GetDocsetFeeds()
 
 	// downloads work
