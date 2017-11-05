@@ -14,7 +14,8 @@ func processCommand(query string, language string) {
 
 	docset := queryEngine.GetIndicesForLanguage(language)
 	fmt.Printf(docset.Name)
-	for _, x := range docset.Data {
+
+	for _, x := range docset.Filter(query) {
 		x.PrintElement()
 	}
 
