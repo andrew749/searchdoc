@@ -16,5 +16,5 @@ type DocsetElement struct {
 }
 
 func (element DocsetElement) PrintElement() {
-	fmt.Printf("%s: %s\n", element.Name, element.Type)
+	fmt.Printf("Name: %s\nType:%s\nPath:%s\n\n\n", element.Name, element.Type, element.Path)
 }
