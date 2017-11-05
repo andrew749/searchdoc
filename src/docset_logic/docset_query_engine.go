@@ -12,6 +12,7 @@ type DocsetQueryEngine interface {
 	GetDownloadedDocsets() []string
 	GetDownloadableDocsets() []string
 	DownloadDocset(language string) bool
+	LoadDocumentationData(language string, url string) []byte
 }
 
 /**
@@ -31,6 +32,10 @@ func (engine DocsetQueryEngineImpl) GetDownloadableDocsets() []string {
 	}
 
 	return res
+}
+
+func (engine DocsetQueryEngineImpl) LoadDocumentationData(language string, url string) []byte {
+	return LoadDocumentationUrl(language, url)
 }
 
 func (engine DocsetQueryEngineImpl) GetIndicesForLanguage(language string) data_models.Docset {

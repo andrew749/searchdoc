@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	docset_logic "searchdoc/src/docset_logic"
+	"strings"
 )
 
 var language string
@@ -15,17 +17,26 @@ func processCommand(query string, language string) {
 	docset := queryEngine.GetIndicesForLanguage(language)
 	fmt.Printf(docset.Name)
 
-	for _, x := range docset.Filter(query) {
-		x.PrintElement()
+	filterResults := docset.Filter(query)
+	count := 0
+	for _, x := range filterResults {
+		fmt.Printf("%d) %s\n", count, x.Name)
+		count += 1
 	}
 
-	// get the feed data
-	// To be used for determining what to download
-	//feeds := GetDocsetFeeds()
+	var selection = 0
+	_, err := fmt.Scanf("%d", &selection)
 
-	// downloads work
-	//DownloadDocset(feeds[0].Urls[0])
-	//fmt.Println(GetAvailableDocsets())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	documentationLocation := filterResults[selection].Path
+	// remove any trailing #
+	cleanedLocation := documentationLocation[0:strings.LastIndex(documentationLocation, "#")]
+	documentationData := queryEngine.LoadDocumentationData(language, cleanedLocation)
+	fmt.Println(string(documentationData))
+
 }
 
 func main() {

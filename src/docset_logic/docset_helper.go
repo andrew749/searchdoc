@@ -91,6 +91,21 @@ func DownloadDocset(url string) error {
 	return nil
 }
 
+func LoadDocumentationUrl(language string, url string) []byte {
+	documentationDir := filepath.Join(
+		utils.GetDocsetPath(language),
+		"Contents",
+		"Resources",
+		"Documents",
+		url)
+
+	b, err := ioutil.ReadFile(documentationDir)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return b
+}
+
 /**
 * Get the available docsets which are stored locally in the
 * directory specified in preferences.
