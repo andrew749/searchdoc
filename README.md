@@ -4,6 +4,8 @@ Search documentation for a specific langauge.
 
 Supports the same documentation formats that [Dash](http://kapeli.com/dash) and [Zeal](http://zealdocs.org) do.
 
+## Build
+To build the executable, simply run `make`.
 
 ## Usage
 
