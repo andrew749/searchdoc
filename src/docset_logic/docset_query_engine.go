@@ -9,7 +9,9 @@ import (
  */
 type DocsetQueryEngine interface {
 	GetIndicesForLanguage(language string) data_models.Docset
-	GetDocsets() []string
+	GetDownloadedDocsets() []string
+	GetDownloadableDocsets() []string
+	DownloadDocset(language string) bool
 }
 
 /**
@@ -18,10 +20,39 @@ type DocsetQueryEngine interface {
 type DocsetQueryEngineImpl struct {
 }
 
-func (engine *DocsetQueryEngineImpl) GetIndicesForLanguage(language string) data_models.Docset {
+func (engine DocsetQueryEngineImpl) GetDownloadedDocsets() []string {
+	return GetAvailableDocsets()
+}
+
+func (engine DocsetQueryEngineImpl) GetDownloadableDocsets() []string {
+	res := make([]string, 0)
+	for _, v := range GetDocsetFeeds() {
+		res = append(res, v.Name)
+	}
+
+	return res
+}
+
+func (engine DocsetQueryEngineImpl) GetIndicesForLanguage(language string) data_models.Docset {
 	return DocsetForLanguage(language)
 }
 
-func (engine *DocsetQueryEngineImpl) GetDocsets() []string {
-	return GetAvailableDocsets()
+func (engine DocsetQueryEngineImpl) DownloadDocset(language string) bool {
+	//TODO: make more efficient by using some map and not a linear search
+	feeds := GetDocsetFeeds()
+
+	for _, v := range feeds {
+		if v.Name == language {
+			DownloadDocset(v.Urls[0])
+			return true
+		}
+	}
+
+	return false
+}
+
+var _queryEngine = DocsetQueryEngineImpl{}
+
+func GetQueryEngine() DocsetQueryEngine {
+	return _queryEngine
 }

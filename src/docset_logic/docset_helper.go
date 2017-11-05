@@ -14,6 +14,7 @@ import (
 	data_models "searchdoc/src/data_models"
 	database "searchdoc/src/database"
 	utils "searchdoc/src/utils"
+	"strings"
 )
 
 /**
@@ -63,7 +64,7 @@ func GetDocsetFeeds() []data_models.FeedData {
 				buf := new(bytes.Buffer)
 				buf.ReadFrom(reader)
 				xml.Unmarshal(buf.Bytes(), &data)
-				data.Name = header.FileInfo().Name()
+				data.Name = strings.TrimSuffix(header.FileInfo().Name(), filepath.Ext(header.FileInfo().Name()))
 
 				res = append(res, data)
 			}
