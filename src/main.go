@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"searchdoc/src/data_models"
 	docset_logic "searchdoc/src/docset_logic"
 	"strings"
 )
@@ -14,14 +15,26 @@ var queryType string
 func processCommand(query string, language string) {
 	queryEngine := docset_logic.GetQueryEngine()
 
-	docset := queryEngine.GetIndicesForLanguage(language)
-	fmt.Printf(docset.Name)
+	var docset data_models.Docset
+
+	if language != "" {
+		docset = queryEngine.GetIndicesForLanguage(language)
+		fmt.Printf(docset.Name)
+	} else {
+		fmt.Printf("TODO: Not implemented all langauge search.\n")
+		return
+	}
 
 	filterResults := docset.Filter(query)
 	count := 0
 	for _, x := range filterResults {
 		fmt.Printf("%d) %s\n", count, x.Name)
 		count += 1
+	}
+
+	if count == 0 {
+		fmt.Printf("No results found.\n")
+		return
 	}
 
 	var selection = 0
