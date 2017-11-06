@@ -159,13 +159,13 @@ func DocsetForLanguage(language string) data_models.Docset {
 	languageResults := database.GetAllIndexResultsForLanguage(query)
 
 	var docset data_models.Docset
-	plist, err := utils.GetDocsetPList(language)
+	//plist, err := utils.GetDocsetPList(language)
 
-	if err != nil {
-		log.Fatal(err)
-	}
+	//if err != nil {
+	//log.Fatal(err)
+	//}
 
-	docset.DocsetPlist = plist
+	//docset.DocsetPlist = plist
 	docset.Data = make([]data_models.DocsetElement, 0, 0)
 
 	// iterate over the results for a specific language
