@@ -46,7 +46,15 @@ func processCommand(query string, language string) {
 
 	documentationLocation := filterResults[selection].Path
 	// remove any trailing #
-	cleanedLocation := documentationLocation[0:strings.LastIndex(documentationLocation, "#")]
+	var cleanedLocation string
+
+	hashIndex := strings.LastIndex(documentationLocation, "#")
+	if hashIndex > 0 {
+		cleanedLocation = documentationLocation[0:hashIndex]
+	} else {
+		cleanedLocation = documentationLocation
+	}
+
 	documentationData := queryEngine.LoadDocumentationData(language, cleanedLocation)
 	fmt.Println(string(documentationData))
 
