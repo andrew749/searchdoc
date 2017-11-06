@@ -1,9 +1,11 @@
-package main
+package database
 
 import (
 	"database/sql"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
+	"path/filepath"
+	"searchdoc/src/utils"
 )
 
 /**
@@ -29,12 +31,13 @@ type DocsetQuery struct {
 }
 
 func GetAllIndexResultsForLanguage(query DocsetQuery) []DocsetQueryResult {
-	databaseLocation := GetSQLiteLocation(query.Path)
 
-	db := OpenDatabaseFile(databaseLocation)
+	log.Println(query.Path)
+	db := OpenDatabaseFile(query.Path)
+
 	defer db.Close()
 
-	queryResults, err := db.Query("SELECT * FROM searchIndex")
+	queryResults, err := db.Query("SELECT id, name, type, path FROM searchIndex")
 
 	if err != nil {
 		log.Fatal(err)
@@ -53,6 +56,7 @@ func GetAllIndexResultsForLanguage(query DocsetQuery) []DocsetQueryResult {
 			&queryResult.QueryResultName,
 			&queryResult.QueryResultType,
 			&queryResult.QueryResultPath)
+
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -66,11 +70,14 @@ func GetAllIndexResultsForLanguage(query DocsetQuery) []DocsetQueryResult {
 * Get the location of an sqlite file.
  */
 func GetSQLiteLocation(language string) string {
-	return "ERROR NOT IMPLEMENTED"
+	sqLitePath := filepath.Join(
+		utils.GetDocsetPath(language),
+		"/Contents/Resources/docSet.dsidx")
+	return sqLitePath
 }
 
 /**
- * Open an sqlite database file
+* Open an sqlite database file
  */
 func OpenDatabaseFile(filePath string) *sql.DB {
 	db, err := sql.Open("sqlite3", filePath)
