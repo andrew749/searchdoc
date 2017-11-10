@@ -8,9 +8,11 @@ package core
  */
 
 import (
+    "errors"
     "fmt"
     "log"
     "strings"
+
     "searchdoc/src/data_models"
     docset_logic "searchdoc/src/docset_logic"
 )
@@ -35,9 +37,11 @@ type CoreLayer interface {
     ListInstalledDocsets() []string
 }
 
+var NoLanguageError error = errors.New("core: no language specified")
+var NoResultsError error = errors.New("core: no results found")
+
 // TODO: save language type and make it mutable while program is running
-func Query(query string, language string) []string {
-    var result []string
+func Query(query string, language string) (string, error) {
     queryEngine := docset_logic.GetQueryEngine()
 
     var docset data_models.Docset
@@ -47,7 +51,7 @@ func Query(query string, language string) []string {
         fmt.Printf(docset.Name)
     } else {
         fmt.Printf(docset.Name)
-        return append(result, "No language specified.\n")
+        return "", NoLanguageError
     }
 
     filterResults := docset.Filter(query)
@@ -59,7 +63,7 @@ func Query(query string, language string) []string {
     }
 
     if count == 0 {
-        return append(result, "No results found.\n")
+        return "", NoResultsError
     }
 
     var selection = 0
@@ -80,13 +84,11 @@ func Query(query string, language string) []string {
     }
 
     documentationData := queryEngine.LoadDocumentationData(language, cleanedLocation)
-    result = append(result, string(documentationData))
-
-    return result
+    return string(documentationData), nil
 }
 
 func DownloadDocset(language string) {
-   _ = docset_logic.GetQueryEngine().DownloadDocset(language) 
+   _ = docset_logic.GetQueryEngine().DownloadDocset(language)
 }
 
 func ListDownloadableDocsets() []string {
