@@ -1,8 +1,7 @@
-package main
+package ui
 
 import (
     "fmt"
-    "io/ioutil"
     "log"
 
     "github.com/jroimartin/gocui"
@@ -160,11 +159,6 @@ func layout(g *gocui.Gui) error {
         if err != gocui.ErrUnknownView {
             return err
         }
-        b, err := ioutil.ReadFile("Mark.Twain-Tom.Sawyer.txt")
-        if err != nil {
-            panic(err)
-        }
-        fmt.Fprintf(v, "%s", b[:2000])
         v.Editable = false
         v.Wrap = true
         if _, err := g.SetCurrentView("main"); err != nil {
@@ -174,8 +168,25 @@ func layout(g *gocui.Gui) error {
     return nil
 }
 
-func main() {
-    g, err := gocui.NewGui(gocui.OutputNormal)
+func SetContent(content []byte) {
+    g.Update(func(g *gocui.Gui) error {
+        v, err := g.View("main")
+        if err != nil {
+            // TODO(ajklen) handle error
+        }
+        v.Clear()
+        if (content != nil) {
+            fmt.Fprintln(v, content)
+        }
+        return nil
+    })
+}
+
+var g *gocui.Gui
+
+func Init() {
+    var err error
+    g, err = gocui.NewGui(gocui.OutputNormal)
     if err != nil {
         log.Panicln(err)
     }
@@ -185,11 +196,11 @@ func main() {
 
     g.SetManagerFunc(layout)
 
-    if err := keybindings(g); err != nil {
+    if err = keybindings(g); err != nil {
         log.Panicln(err)
     }
 
-    if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
+    if err = g.MainLoop(); err != nil && err != gocui.ErrQuit {
         log.Panicln(err)
     }
 }

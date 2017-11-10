@@ -6,6 +6,7 @@ import (
 	"log"
 	"searchdoc/src/data_models"
 	docset_logic "searchdoc/src/docset_logic"
+	"searchdoc/src/ui"
 	"strings"
 )
 
@@ -46,9 +47,11 @@ func processCommand(query string, language string) {
 
 	documentationLocation := filterResults[selection].Path
 	// remove any trailing #
-	cleanedLocation := documentationLocation[0:strings.LastIndex(documentationLocation, "#")]
+	cleanedLocation := documentationLocation[:strings.LastIndex(documentationLocation, "#")]
 	documentationData := queryEngine.LoadDocumentationData(language, cleanedLocation)
-	fmt.Println(string(documentationData))
+    ui.Init()
+    ui.SetContent(documentationData)
+	//fmt.Println(string(documentationData))
 
 }
 
