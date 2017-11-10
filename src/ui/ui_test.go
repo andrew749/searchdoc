@@ -1,13 +1,13 @@
 package ui
 
 import (
-    "testing"
-    "github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestSetGetQuery(t *testing.T) {
-    controller := UIControllerImpl{}
-    query := "some query"
-    controller.setQuery(query)
-    assert.Equal(t, query, controller.getQuery())
+	controller := UIControllerImpl{}
+	query := "some query"
+	controller.setQuery(query)
+	assert.Equal(t, query, controller.getQuery())
 }
