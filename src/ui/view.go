@@ -141,7 +141,9 @@ func keybindings(g *gocui.Gui) error {
     return nil
 }
 
+// State variables.
 var content string = ""
+var queryResults []string
 
 func layout(g *gocui.Gui) error {
     maxX, maxY := g.Size()
@@ -152,11 +154,9 @@ func layout(g *gocui.Gui) error {
         v.Highlight = true
         v.SelBgColor = gocui.ColorGreen
         v.SelFgColor = gocui.ColorBlack
-        fmt.Fprintln(v, "Item 1")
-        fmt.Fprintln(v, "Item 2")
-        fmt.Fprintln(v, "Item 3")
-        fmt.Fprint(v, "\rWill be")
-        fmt.Fprint(v, "deleted\rItem 4\nItem 5")
+		for _, result := range queryResults {
+			fmt.Fprintln(v, result)
+		}
     }
     if v, err := g.SetView("main", 30, -1, maxX, maxY); err != nil {
         if err != gocui.ErrUnknownView {
@@ -178,9 +178,12 @@ func layout(g *gocui.Gui) error {
     return nil
 }
 
+func SetHtmlContent(html string) {
+	content = html
+}
 
-func SetContent(s string) {
-	content = s
+func SetQueryResults(results []string) {
+	queryResults = results
 }
 
 func Init() {

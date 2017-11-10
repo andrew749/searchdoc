@@ -9,8 +9,6 @@ package core
 
 import (
 	"errors"
-	"fmt"
-	"log"
 	"strings"
 
 	"searchdoc/src/data_models"
@@ -38,42 +36,26 @@ type CoreLayer interface {
 }
 
 var NoLanguageError error = errors.New("core: no language specified")
-var NoResultsError error = errors.New("core: no results found")
 
 // TODO: save language type and make it mutable while program is running
-func Query(query string, language string) (string, error) {
+// Return a list of documents that match the given query.
+func Query(query string, language string) ([]data_models.DocsetElement, error) {
 	queryEngine := docset_logic.GetQueryEngine()
 
 	var docset data_models.Docset
 
-	if language != "" {
-		docset = queryEngine.GetIndicesForLanguage(language)
-		fmt.Printf(docset.Name)
-	} else {
-		fmt.Printf(docset.Name)
-		return "", NoLanguageError
+	if language == "" {
+		return []data_models.DocsetElement{}, NoLanguageError
 	}
 
+	docset = queryEngine.GetIndicesForLanguage(language)
 	filterResults := docset.Filter(query)
-	count := 0
+	return filterResults, nil
+}
 
-	for _, x := range filterResults {
-		fmt.Printf("%d) %s\n", count, x.Name)
-		count += 1
-	}
-
-	if count == 0 {
-		return "", NoResultsError
-	}
-
-	var selection = 0
-	_, err := fmt.Scanf("%d", &selection)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	documentationLocation := filterResults[selection].Path
+// Return the html-string of the document body.
+func GetDocContent(doc data_models.DocsetElement, language string) (string, error) {
+	documentationLocation := doc.Path
 	var cleanedLocation string
 
 	hashIndex := strings.LastIndex(documentationLocation, "#")
@@ -83,6 +65,7 @@ func Query(query string, language string) (string, error) {
 		cleanedLocation = documentationLocation
 	}
 
+	queryEngine := docset_logic.GetQueryEngine()
 	documentationData := queryEngine.LoadDocumentationData(language, cleanedLocation)
 	return string(documentationData), nil
 }
