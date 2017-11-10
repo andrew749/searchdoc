@@ -6,19 +6,19 @@ package ui
  */
 
 type UIController interface {
-    setQuery(string)
-    getQuery() string
+	setQuery(string)
+	getQuery() string
 }
 
 type UIControllerImpl struct {
-    query string
+	query string
 }
 
 func (c *UIControllerImpl) setQuery(q string) {
-    c.query = q
+	c.query = q
 }
 
 func (c *UIControllerImpl) getQuery() string {
-    return c.query
+	return c.query
 }
 
