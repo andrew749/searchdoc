@@ -3,7 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	core "searchdoc/src/core"
+	"searchdoc/src/core"
+	"searchdoc/src/ui"
 )
 
 func main() {
@@ -47,5 +48,8 @@ func main() {
 		return
 	}
 
-	fmt.Print(data)
+	ui.SetContent(data)
+	ui.Init()
+
+	//fmt.Print(data)
 }

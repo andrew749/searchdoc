@@ -4,6 +4,7 @@ import (
     "fmt"
     "log"
 
+	"searchdoc/src/html2text"
     "github.com/jroimartin/gocui"
 )
 
@@ -140,6 +141,8 @@ func keybindings(g *gocui.Gui) error {
     return nil
 }
 
+var content string = ""
+
 func layout(g *gocui.Gui) error {
     maxX, maxY := g.Size()
     if v, err := g.SetView("side", -1, -1, 30, maxY); err != nil {
@@ -161,6 +164,13 @@ func layout(g *gocui.Gui) error {
         }
         v.Editable = false
         v.Wrap = true
+		w, _ := v.Size()
+		opts := html2text.Options{PrettyTables: true, MaxLineLength: w - 1}
+		text, err := html2text.FromString(content, opts)
+		if err != nil {
+			return err
+		}
+		fmt.Fprint(v, text)
         if _, err := g.SetCurrentView("main"); err != nil {
             return err
         }
@@ -168,39 +178,26 @@ func layout(g *gocui.Gui) error {
     return nil
 }
 
-func SetContent(content []byte) {
-    g.Update(func(g *gocui.Gui) error {
-        v, err := g.View("main")
-        if err != nil {
-            // TODO(ajklen) handle error
-        }
-        v.Clear()
-        if (content != nil) {
-            fmt.Fprintln(v, content)
-        }
-        return nil
-    })
+
+func SetContent(s string) {
+	content = s
 }
 
-var g *gocui.Gui
-
 func Init() {
-    var err error
-    g, err = gocui.NewGui(gocui.OutputNormal)
+	g, err := gocui.NewGui(gocui.OutputNormal)
     if err != nil {
         log.Panicln(err)
     }
     defer g.Close()
 
     g.Cursor = false
-
     g.SetManagerFunc(layout)
 
-    if err = keybindings(g); err != nil {
+	if err := keybindings(g); err != nil {
         log.Panicln(err)
     }
 
-    if err = g.MainLoop(); err != nil && err != gocui.ErrQuit {
+	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
         log.Panicln(err)
     }
 }
