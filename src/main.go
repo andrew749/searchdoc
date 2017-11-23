@@ -41,7 +41,6 @@ func main() {
 
 	fmt.Printf("language: %s\nquery: %s\n", language, query)
 	// process the command
-	// TODO: replace with connection to ui
 	results, err := core.Query(query, language)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err.Error())
@@ -59,6 +58,4 @@ func main() {
 	}
 
 	ui.Init()
-
-	//fmt.Print(data)
 }
