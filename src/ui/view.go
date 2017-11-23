@@ -19,10 +19,12 @@ var (
 
 // State variables.
 var (
-	content      string = ""
-	queryResults []string
-	language     string
-	searchBuffer []rune
+	content           string = ""
+	queryResults      []string
+	queryResultsRaw   []data_models.DocsetElement
+	language          string
+	searchBuffer      []rune
+	lastDisplayedPage string
 )
 
 const (
@@ -132,10 +134,10 @@ func simpleEditor(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
 		log.Fatal(err)
 	}
 
-	results, err := core.Query(query, language)
+	queryResultsRaw, _ = core.Query(query, language)
 	queryResults = make([]string, 0)
 
-	queryResults = convertResultsToStringSlice(results)
+	queryResults = convertResultsToStringSlice(queryResultsRaw)
 
 	// perform query
 	SetQueryResults(queryResults)
@@ -153,22 +155,23 @@ type SideManager struct{}
 
 func (mgr SideManager) Layout(g *gocui.Gui) error {
 	_, maxY := g.Size()
-
-	if v, err := g.SetView("side", -1, searchBarHeight, 30, maxY); err != nil {
+	v, err := g.SetView("side", -1, searchBarHeight, 30, maxY)
+	if err != nil {
 		sideBarView = v
 
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-
-		for _, result := range queryResults {
-			fmt.Fprintln(v, result)
-		}
-
-		v.Highlight = true
-		v.SelBgColor = gocui.ColorGreen
-		v.SelFgColor = gocui.ColorBlack
 	}
+
+	v.Clear()
+	for _, result := range queryResults {
+		fmt.Fprintln(v, result)
+	}
+
+	v.Highlight = true
+	v.SelBgColor = gocui.ColorGreen
+	v.SelFgColor = gocui.ColorBlack
 	return nil
 }
 
@@ -177,24 +180,28 @@ type MainManager struct{}
 func (mgr MainManager) Layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 
-	if v, err := g.SetView("main", 30, searchBarHeight, maxX, maxY); err != nil {
+	v, err := g.SetView("main", 30, searchBarHeight, maxX, maxY)
+
+	if err != nil {
 		mainContentView = v
 
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		w, _ := v.Size()
-		opts := html2text.Options{PrettyTables: true, MaxLineLength: w - 1}
-		text, err := html2text.FromString(content, opts)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		fmt.Fprint(v, text)
-
-		v.Editable = false
-		v.Wrap = true
 	}
+
+	v.Clear()
+	w, _ := v.Size()
+	opts := html2text.Options{PrettyTables: true, MaxLineLength: w - 1}
+	text, err := html2text.FromString(content, opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Fprint(v, text)
+
+	v.Editable = false
+	v.Wrap = true
 
 	return nil
 }
@@ -206,9 +213,6 @@ func (mgr SearchManager) Layout(g *gocui.Gui) error {
 	maxX, _ := g.Size()
 
 	if v, err := g.SetView("searchBar", -1, -1, maxX, searchBarHeight); err != nil {
-		searchBar = v
-		fmt.Fprintln(v, string(searchBuffer))
-
 		if err != gocui.ErrUnknownView {
 			return err
 		}
@@ -216,6 +220,9 @@ func (mgr SearchManager) Layout(g *gocui.Gui) error {
 		if _, err := g.SetCurrentView("searchBar"); err != nil {
 			return err
 		}
+
+		searchBar = v
+		fmt.Fprintln(v, string(searchBuffer))
 
 		v.Editable = true
 		v.Editor = SearchEditor
@@ -230,6 +237,14 @@ func SetHtmlContent(html string) {
 
 func SetQueryResults(results []string) {
 	queryResults = results
+
+	if len(queryResultsRaw) > 0 {
+		data, err := core.GetDocContent(queryResultsRaw[0], language)
+		if err != nil {
+			log.Fatal(err)
+		}
+		content = data
+	}
 }
 
 func SetLanguage(lang string) {
