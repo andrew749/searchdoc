@@ -32,7 +32,6 @@ type DocsetQuery struct {
 
 func GetAllIndexResultsForLanguage(query DocsetQuery) []DocsetQueryResult {
 
-	log.Println(query.Path)
 	db := OpenDatabaseFile(query.Path)
 
 	defer db.Close()
@@ -85,8 +84,6 @@ func OpenDatabaseFile(filePath string) *sql.DB {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	log.Println("Connected to database successfully")
 
 	return db
 }

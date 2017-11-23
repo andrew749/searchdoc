@@ -52,6 +52,7 @@ func main() {
 		resultStrs[i] = result.Name
 	}
 	ui.SetQueryResults(resultStrs)
+	ui.SetLanguage(language)
 
 	if data, err := core.GetDocContent(results[0], language); err == nil {
 		ui.SetHtmlContent(data)
