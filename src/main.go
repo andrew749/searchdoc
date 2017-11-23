@@ -3,7 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	core "searchdoc/src/core"
+	"searchdoc/src/core"
+	"searchdoc/src/ui"
 )
 
 func main() {
@@ -41,11 +42,23 @@ func main() {
 	fmt.Printf("language: %s\nquery: %s\n", language, query)
 	// process the command
 	// TODO: replace with connection to ui
-	data, err := core.Query(query, language)
+	results, err := core.Query(query, language)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err.Error())
 		return
 	}
 
-	fmt.Print(data)
+	resultStrs := make([]string, len(results))
+	for i, result := range results {
+		resultStrs[i] = result.Name
+	}
+	ui.SetQueryResults(resultStrs)
+
+	if data, err := core.GetDocContent(results[0], language); err == nil {
+		ui.SetHtmlContent(data)
+	}
+
+	ui.Init()
+
+	//fmt.Print(data)
 }
