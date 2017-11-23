@@ -43,8 +43,8 @@ func cursorDown(g *gocui.Gui, v *gocui.View) error {
 			if err := sideBarView.SetOrigin(ox, oy+1); err != nil {
 				return err
 			}
-			RenderSidebarContentIfNecessary(cy)
 		}
+		RenderSidebarContentIfNecessary(cy)
 	}
 	return nil
 }
