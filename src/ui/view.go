@@ -43,6 +43,7 @@ func cursorDown(g *gocui.Gui, v *gocui.View) error {
 			if err := sideBarView.SetOrigin(ox, oy+1); err != nil {
 				return err
 			}
+			RenderSidebarContentIfNecessary(cy)
 		}
 	}
 	return nil
@@ -57,6 +58,7 @@ func cursorUp(g *gocui.Gui, v *gocui.View) error {
 				return err
 			}
 		}
+		RenderSidebarContentIfNecessary(cy)
 	}
 	return nil
 }
@@ -134,13 +136,7 @@ func simpleEditor(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
 		log.Fatal(err)
 	}
 
-	queryResultsRaw, _ = core.Query(query, language)
-	queryResults = make([]string, 0)
-
-	queryResults = convertResultsToStringSlice(queryResultsRaw)
-
-	// perform query
-	SetQueryResults(queryResults)
+	Search(query)
 }
 
 func convertResultsToStringSlice(results []data_models.DocsetElement) []string {
@@ -231,15 +227,26 @@ func (mgr SearchManager) Layout(g *gocui.Gui) error {
 	return nil
 }
 
-func SetHtmlContent(html string) {
-	content = html
-}
-
 func SetQueryResults(results []string) {
 	queryResults = results
+	RenderSidebarContentIfNecessary(0)
+}
 
+func Search(query string) {
+	queryResultsRaw, _ = core.Query(query, language)
+
+	queryResults = make([]string, 0)
+
+	queryResults = convertResultsToStringSlice(queryResultsRaw)
+
+	// perform query
+	SetQueryResults(queryResults)
+}
+
+func RenderSidebarContentIfNecessary(cursorPosition int) {
 	if len(queryResultsRaw) > 0 {
-		data, err := core.GetDocContent(queryResultsRaw[0], language)
+		data, err := core.GetDocContent(queryResultsRaw[cursorPosition], language)
+
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -253,9 +260,11 @@ func SetLanguage(lang string) {
 
 func Init() {
 	g, err := gocui.NewGui(gocui.OutputNormal)
+
 	if err != nil {
 		log.Panicln(err)
 	}
+
 	defer g.Close()
 
 	g.Cursor = false
