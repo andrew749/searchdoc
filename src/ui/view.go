@@ -1,27 +1,22 @@
 package ui
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/jroimartin/gocui"
 	"searchdoc/src/core"
 	"searchdoc/src/data_models"
-	"searchdoc/src/html2text"
 )
 
 // views
 var (
-	mainContentView *gocui.View
-	searchBar       *gocui.View
-	sideBarView     *gocui.View
+	searchBar    SearchBar
+	sideBar      SideBar
+	documentPane DocumentPane
 )
 
 // State variables.
 var (
-	content           string = ""
-	queryResults      []string
-	queryResultsRaw   []data_models.DocsetElement
 	language          string
 	searchBuffer      []rune
 	lastDisplayedPage string
@@ -30,38 +25,6 @@ var (
 const (
 	searchBarHeight = 1
 )
-
-var SearchEditor gocui.Editor = gocui.EditorFunc(simpleEditor)
-
-func cursorDown(g *gocui.Gui, v *gocui.View) error {
-	if sideBarView != nil {
-		// get the cursor so we can determine if we need to scroll the pane as wel
-		cx, cy := sideBarView.Cursor()
-		if err := sideBarView.SetCursor(cx, cy+1); err != nil {
-			ox, oy := sideBarView.Origin()
-			// move the view down
-			if err := sideBarView.SetOrigin(ox, oy+1); err != nil {
-				return err
-			}
-		}
-		RenderSidebarContentIfNecessary(cy)
-	}
-	return nil
-}
-
-func cursorUp(g *gocui.Gui, v *gocui.View) error {
-	if sideBarView != nil {
-		ox, oy := sideBarView.Origin()
-		cx, cy := sideBarView.Cursor()
-		if err := sideBarView.SetCursor(cx, cy-1); err != nil && oy > 0 {
-			if err := sideBarView.SetOrigin(ox, oy-1); err != nil {
-				return err
-			}
-		}
-		RenderSidebarContentIfNecessary(cy)
-	}
-	return nil
-}
 
 func scrollUp(g *gocui.Gui, v *gocui.View) error {
 	if v != nil {
@@ -103,10 +66,10 @@ func keybindings(g *gocui.Gui) error {
 	}
 
 	// navigate the option list
-	if err := g.SetKeybinding("", gocui.KeyArrowDown, gocui.ModNone, cursorDown); err != nil {
+	if err := g.SetKeybinding("", gocui.KeyArrowDown, gocui.ModNone, cursor(1)); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("", gocui.KeyArrowUp, gocui.ModNone, cursorUp); err != nil {
+	if err := g.SetKeybinding("", gocui.KeyArrowUp, gocui.ModNone, cursor(-1)); err != nil {
 		return err
 	}
 
@@ -118,25 +81,21 @@ func keybindings(g *gocui.Gui) error {
 	return nil
 }
 
-func simpleEditor(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
-	switch {
-	case ch != 0 && mod == 0:
-		v.EditWrite(ch)
-		searchBuffer = append(searchBuffer, ch)
-	case key == gocui.KeySpace:
-		v.EditWrite(' ')
-		searchBuffer = append(searchBuffer, ch)
-	case key == gocui.KeyBackspace || key == gocui.KeyBackspace2:
-		v.EditDelete(true)
+func cursor(direction int) func(g *gocui.Gui, v *gocui.View) error {
+	return func(g *gocui.Gui, v *gocui.View) error {
+		sideBar.Scroll <- direction
+		return nil
 	}
+}
 
-	query, err := v.Line(0)
+func Search(query string, language string) []data_models.DocsetElement {
+	results, err := core.Query(query, language)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	Search(query)
+	return results
 }
 
 func convertResultsToStringSlice(results []data_models.DocsetElement) []string {
@@ -147,118 +106,11 @@ func convertResultsToStringSlice(results []data_models.DocsetElement) []string {
 	return resultStrs
 }
 
-type SideManager struct{}
-
-func (mgr SideManager) Layout(g *gocui.Gui) error {
-	_, maxY := g.Size()
-	v, err := g.SetView("side", -1, searchBarHeight, 30, maxY)
-	if err != nil {
-		sideBarView = v
-
-		if err != gocui.ErrUnknownView {
-			return err
-		}
-	}
-
-	v.Clear()
-	for _, result := range queryResults {
-		fmt.Fprintln(v, result)
-	}
-
-	v.Highlight = true
-	v.SelBgColor = gocui.ColorGreen
-	v.SelFgColor = gocui.ColorBlack
-	return nil
-}
-
-type MainManager struct{}
-
-func (mgr MainManager) Layout(g *gocui.Gui) error {
-	maxX, maxY := g.Size()
-
-	v, err := g.SetView("main", 30, searchBarHeight, maxX, maxY)
-
-	if err != nil {
-		mainContentView = v
-
-		if err != gocui.ErrUnknownView {
-			return err
-		}
-	}
-
-	v.Clear()
-	w, _ := v.Size()
-	opts := html2text.Options{PrettyTables: true, MaxLineLength: w - 1}
-	text, err := html2text.FromString(content, opts)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Fprint(v, text)
-
-	v.Editable = false
-	v.Wrap = true
-
-	return nil
-}
-
-type SearchManager struct{}
-
-func (mgr SearchManager) Layout(g *gocui.Gui) error {
-
-	maxX, _ := g.Size()
-
-	if v, err := g.SetView("searchBar", -1, -1, maxX, searchBarHeight); err != nil {
-		if err != gocui.ErrUnknownView {
-			return err
-		}
-
-		if _, err := g.SetCurrentView("searchBar"); err != nil {
-			return err
-		}
-
-		searchBar = v
-		fmt.Fprintln(v, string(searchBuffer))
-
-		v.Editable = true
-		v.Editor = SearchEditor
-	}
-
-	return nil
-}
-
-func SetQueryResults(results []string) {
-	queryResults = results
-	RenderSidebarContentIfNecessary(0)
-}
-
-func Search(query string) {
-	queryResultsRaw, _ = core.Query(query, language)
-
-	queryResults = make([]string, 0)
-
-	queryResults = convertResultsToStringSlice(queryResultsRaw)
-
-	// perform query
-	SetQueryResults(queryResults)
-}
-
-func RenderSidebarContentIfNecessary(cursorPosition int) {
-	if len(queryResultsRaw) > 0 {
-		data, err := core.GetDocContent(queryResultsRaw[cursorPosition], language)
-
-		if err != nil {
-			log.Fatal(err)
-		}
-		content = data
-	}
-}
-
-func SetLanguage(lang string) {
+func Init(lang string) {
+	// set the language for this searching instance
 	language = lang
-}
 
-func Init() {
+	// create a new gui
 	g, err := gocui.NewGui(gocui.OutputNormal)
 
 	if err != nil {
@@ -268,7 +120,35 @@ func Init() {
 	defer g.Close()
 
 	g.Cursor = false
-	g.SetManager(SearchManager{}, MainManager{}, SideManager{})
+
+	// initialize views
+	searchBar = CreateSearchBar(make(chan string))
+	sideBar = CreateSideBar(make(chan []string), make(chan int), searchBarHeight, 30)
+	documentPane = CreateDocumentPane(make(chan string))
+
+	go func() {
+		for {
+			searchResults := Search(<-searchBar.DidChange, language)
+			sideBarItems := convertResultsToStringSlice(searchResults)
+
+			// update the sidebar items
+			sideBar.ResultsChannel <- sideBarItems
+
+			// update the document pane
+			if len(searchResults) > 0 {
+				data, err := core.GetDocContent(searchResults[*sideBar.cursorPosition], language)
+
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				documentPane.NewContent <- data
+			}
+		}
+	}()
+
+	// setup views
+	g.SetManager(searchBar, documentPane, sideBar)
 
 	if err := keybindings(g); err != nil {
 		log.Panicln(err)

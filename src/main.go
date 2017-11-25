@@ -36,10 +36,9 @@ func main() {
 	} else if *package_to_download != "" {
 		core.DownloadDocset(*package_to_download)
 		return
+	} else {
+		fmt.Printf("Selected Language \"%s\"\n", language)
+		ui.Init(language)
 	}
 
-	fmt.Printf("language: %s\n", language)
-
-	ui.SetLanguage(language)
-	ui.Init()
 }
