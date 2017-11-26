@@ -3,38 +3,47 @@ package ui
 import (
 	"fmt"
 	"github.com/jroimartin/gocui"
+	"searchdoc/src/data_models"
 )
 
 type SideBar struct {
-	ResultsChannel  chan []string
-	results         *[]string
-	Scroll          chan int // let us know when the user scrolled
-	searchBarHeight int
-	width           int
-	direction       *int
-	cursorPosition  *int
+	ResultsChannel        chan []data_models.DocsetElement
+	UpdateSelectedElement chan data_models.DocsetElement
+	results               *[]data_models.DocsetElement
+	Scroll                chan int // let us know when the user scrolled
+	searchBarHeight       int
+	width                 int
+	direction             *int
+	cursorPosition        *int
 }
 
-func CreateSideBar(resultsChannel chan []string, scroll chan int, searchBarHeight int, width int) SideBar {
+func CreateSideBar(resultsChannel chan []data_models.DocsetElement, scroll chan int, searchBarHeight int, width int) SideBar {
 	cursorPosition := 0
 	direction := 1
-	var results []string
+	var results []data_models.DocsetElement
+	updateChannel := make(chan data_models.DocsetElement)
 
 	go func() {
 		// keep waiting for changes and updating the scroll state
 		for {
-			direction = <-scroll
-			cursorPosition += direction
+			tempDirection := <-scroll
+			if cursorPosition+direction >= -0 && cursorPosition+direction < len(results) {
+				direction = tempDirection
+				cursorPosition += direction
+				updateChannel <- results[cursorPosition]
+			}
 		}
 	}()
 
 	go func() {
 		for {
 			results = <-resultsChannel
+			cursorPosition = 0
+			direction = 1
 		}
 	}()
 
-	return SideBar{resultsChannel, &results, scroll, searchBarHeight, width, &direction, &cursorPosition}
+	return SideBar{resultsChannel, updateChannel, &results, scroll, searchBarHeight, width, &direction, &cursorPosition}
 }
 
 func (sb SideBar) Layout(g *gocui.Gui) error {
@@ -50,7 +59,7 @@ func (sb SideBar) Layout(g *gocui.Gui) error {
 	v.Clear()
 
 	for _, result := range *sb.results {
-		fmt.Fprintln(v, result)
+		fmt.Fprintln(v, result.Name)
 	}
 
 	v.Highlight = true

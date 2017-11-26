@@ -98,12 +98,14 @@ func Search(query string, language string) []data_models.DocsetElement {
 	return results
 }
 
-func convertResultsToStringSlice(results []data_models.DocsetElement) []string {
-	resultStrs := make([]string, len(results))
-	for i, result := range results {
-		resultStrs[i] = result.Name
+func renderDocumentPane(documentPane DocumentPane, item data_models.DocsetElement, language string) {
+	data, err := core.GetDocContent(item, language)
+
+	if err != nil {
+		log.Fatal(err)
 	}
-	return resultStrs
+
+	documentPane.NewContent <- data
 }
 
 func Init(lang string) {
@@ -123,31 +125,28 @@ func Init(lang string) {
 
 	// initialize views
 	searchBar = CreateSearchBar(make(chan string))
-	sideBar = CreateSideBar(make(chan []string), make(chan int), searchBarHeight, 30)
+	sideBar = CreateSideBar(make(chan []data_models.DocsetElement), make(chan int), searchBarHeight, 30)
 	documentPane = CreateDocumentPane(make(chan string))
 
+	// handle getting input from the user for the searchbar and updating the sidebar
 	go func() {
 		for {
 			searchResults := Search(<-searchBar.DidChange, language)
-			sideBarItems := convertResultsToStringSlice(searchResults)
 
 			// update the sidebar items
-			sideBar.ResultsChannel <- sideBarItems
+			sideBar.ResultsChannel <- searchResults
 
 			// update the document pane
 			if len(searchResults) > 0 {
-				data, err := core.GetDocContent(searchResults[*sideBar.cursorPosition], language)
-
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				documentPane.NewContent <- data
+				renderDocumentPane(documentPane, searchResults[*sideBar.cursorPosition], language)
 			}
 		}
 	}()
 	go func() {
-
+		for {
+			element := <-sideBar.UpdateSelectedElement
+			renderDocumentPane(documentPane, element, language)
+		}
 	}()
 
 	// setup views
