@@ -146,6 +146,9 @@ func Init(lang string) {
 			}
 		}
 	}()
+	go func() {
+
+	}()
 
 	// setup views
 	g.SetManager(searchBar, documentPane, sideBar)

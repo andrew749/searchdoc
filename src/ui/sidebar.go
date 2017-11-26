@@ -11,8 +11,8 @@ type SideBar struct {
 	Scroll          chan int // let us know when the user scrolled
 	searchBarHeight int
 	width           int
-	cursorPosition  *int
 	direction       *int
+	cursorPosition  *int
 }
 
 func CreateSideBar(resultsChannel chan []string, scroll chan int, searchBarHeight int, width int) SideBar {
@@ -49,7 +49,7 @@ func (sb SideBar) Layout(g *gocui.Gui) error {
 
 	v.Clear()
 
-for _, result := range *sb.results {
+	for _, result := range *sb.results {
 		fmt.Fprintln(v, result)
 	}
 
@@ -58,12 +58,12 @@ for _, result := range *sb.results {
 	v.SelFgColor = gocui.ColorBlack
 
 	ox, oy := v.Origin()
-	cx, cy := v.Cursor()
+	cx, _ := v.Cursor()
 
 	switch *sb.direction {
 	// handle a movement up
 	case -1:
-		if err := v.SetCursor(cx, cy-1); err != nil && oy > 0 {
+		if err := v.SetCursor(cx, *sb.cursorPosition); err != nil && oy > 0 {
 			if err := v.SetOrigin(ox, oy-1); err != nil {
 				return err
 			}
@@ -71,7 +71,7 @@ for _, result := range *sb.results {
 		}
 		// handle a movement down
 	case 1:
-		if err := v.SetCursor(cx, cy+1); err != nil {
+		if err := v.SetCursor(cx, *sb.cursorPosition); err != nil {
 			ox, oy := v.Origin()
 
 			// move the view down
@@ -79,6 +79,8 @@ for _, result := range *sb.results {
 				return err
 			}
 		}
+	default:
+		fmt.Println("default")
 	}
 
 	return nil
